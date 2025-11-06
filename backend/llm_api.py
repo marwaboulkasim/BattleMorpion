@@ -1,13 +1,18 @@
 import requests
 import ast
+from dotenv import load_dotenv
+import os
 
-ollama_url = "http://127.0.0.1:11434"  # API locale Ollama
+# Charger les variables d'environnement
+load_dotenv()
+
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 
 def get_llm_move(board, model="llama3", player="x"):
     prompt = f"""
-    Tu es un joueur de Tic-Tac-Toe sur une grille 10x10.
-    Deux joueurs, X et O, jouent à tour de rôle. 
-    L'objectif est d'aligner 5 symboles consécutifs (horizontal, vertical ou diagonal). 
+    Tu es un joueur de morpion (Tic-Tac-Toe) sur une grille 10x10.
+    Deux joueurs, X et O, jouent à tour de rôle.
+    L'objectif est d'aligner 5 symboles consécutifs (horizontal, vertical ou diagonal).
     Le joueur actuel est {player}. Voici la grille actuelle :
     {board}
 
@@ -22,7 +27,7 @@ def get_llm_move(board, model="llama3", player="x"):
     Ne réponds pas avec du texte ou autre chose.
     """
 
-    r = requests.post(f"{ollama_url}/api/generate", json={
+    r = requests.post(f"{OLLAMA_URL}/api/generate", json={
         "model": model,
         "prompt": prompt,
         "system": "You are a Tic-Tac-Toe AI that only returns [x, y] moves.",
@@ -31,13 +36,13 @@ def get_llm_move(board, model="llama3", player="x"):
 
     data = r.json()
     text = data.get("response", "").strip()
-    print("Réponse brute du modèle :", text)  # debug
+    print("Réponse brute du modèle :", text)
 
     try:
         move = ast.literal_eval(text)
         if isinstance(move, list) and len(move) == 2 and all(isinstance(i, int) for i in move):
             return move
-    except:
-        pass
+    except Exception as e:
+        print("Erreur lors du parsing :", e)
 
     return [0, 0]
