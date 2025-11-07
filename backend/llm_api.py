@@ -3,7 +3,6 @@ import ast
 from dotenv import load_dotenv
 import os
 
-# Charger les variables d'environnement
 load_dotenv()
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")

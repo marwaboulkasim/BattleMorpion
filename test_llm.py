@@ -2,10 +2,8 @@ from backend.llm_api import get_llm_move
 from dotenv import load_dotenv
 import os
 
-# Charger les variables d'environnement (.env)
 load_dotenv()
 
-# Récupérer le modèle depuis le .env ou par défaut "llama3"
 model = os.getenv("MODEL_NAME", "llama3")
 
 # Création d'une grille vide 10x10
@@ -18,7 +16,6 @@ board[4][5] = "x"
 
 player = "o"
 
-# Test du modèle
 print(f" Test du modèle : {model}")
 move = get_llm_move(board, model=model, player=player)
 
