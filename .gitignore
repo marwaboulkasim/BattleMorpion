@@ -3,6 +3,9 @@ data/
 .vscode/settings.json
 chroma_db/
 
+# Work files
+/notebooks
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
