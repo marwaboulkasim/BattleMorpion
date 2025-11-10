@@ -15,10 +15,10 @@ function viewGrid() {
 }
 
 let joueur = "X"; // X = Ollama, O = Azure
-let playing = true; // Variable pour contrôler l'état du jeu
-let lock = false; // Variable de verrouillage pour empêcher des mouvements trop rapides
+let playing = true; // Contrôle l'état du jeu
+let lock = false; // Empêche les coups trop rapides
 
-// Fonction pour vérifier la victoire
+// Vérifie si un joueur a gagné (alignement de 5)
 function checkWinner(board, player) {
     for (let i = 0; i < 10; i++) {
         for (let j = 0; j < 10; j++) {
@@ -27,7 +27,7 @@ function checkWinner(board, player) {
                     checkDirection(board, player, i, j, 0, 1) || // Vertical
                     checkDirection(board, player, i, j, 1, 1) || // Diagonal \
                     checkDirection(board, player, i, j, 1, -1)) { // Diagonal /
-                    return true; // Victoire si une direction est valide
+                    return true;
                 }
             }
         }
@@ -46,16 +46,15 @@ function checkDirection(board, player, x, y, dx, dy) {
             break;
         }
     }
-    return count === 5; // 5 symboles consécutifs
+    return count === 5;
 }
 
-// Fonction de gestion des tours
+// Gestion d’un tour
 async function playTurn() {
-    if (!playing || lock) return; // Empêche de jouer si la partie est terminée ou si un verrou est activé
-    lock = true; // Active le verrou pour éviter plusieurs coups simultanés
+    if (!playing || lock) return;
+    lock = true;
 
     try {
-        // Envoi du coup pour le joueur actuel
         const res = await fetch(urlAPI, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -67,38 +66,56 @@ async function playTurn() {
         });
 
         const data = await res.json();
+        let [x, y] = data.move;
 
-        // Vérification que la réponse du modèle est correcte
-        const [x, y] = data.move;
-        if (grid[y][x] === "") { // Si la case est vide, on place le symbole du joueur
-            grid[y][x] = joueur;
-            viewGrid(); // Met à jour l'affichage de la grille
+        // Vérifier si la case est libre, sinon choisir une case vide aléatoire
+        if (grid[y][x] !== "") {
+            console.warn(`Coup invalide du joueur ${joueur} sur [${x},${y}]`);
+            const empty = [];
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    if (grid[i][j] === "") empty.push([j, i]);
+                }
+            }
+            if (empty.length > 0) {
+                [x, y] = empty[Math.floor(Math.random() * empty.length)];
+            }
         }
 
-        // Vérification si le joueur a gagné
+        grid[y][x] = joueur;
+        viewGrid();
+
+        // Vérifie victoire
         if (checkWinner(grid, joueur)) {
-            alert(`${joueur === "X" ? "Ollama" : "Azure"} a gagné ! 🎉`);
-            playing = false; // Met fin à la partie si un joueur gagne
+            alert(`${joueur === "X" ? "Ollama" : "Azure"} a gagné ! `);
+            playing = false;
             return;
         }
 
-        // Changer de joueur après avoir joué un coup
+        // Vérifie match nul
+        if (grid.flat().every(cell => cell !== "")) {
+            alert("Match nul !");
+            playing = false;
+            return;
+        }
+
+        // Changer de joueur
         joueur = joueur === "X" ? "O" : "X";
-        
+
         setTimeout(() => {
-            lock = false; // Déverrouille le jeu pour permettre au joueur suivant de jouer
-            playTurn(); // Rejoue après un petit délai pour respecter les tours
-        }, 700); // Délai de 700ms pour simuler une petite pause entre les coups
+            lock = false;
+            playTurn();
+        }, 700);
 
     } catch (err) {
         console.error("Erreur API :", err);
-        lock = false; // Si une erreur se produit, le verrou est désactivé
-        setTimeout(playTurn, 1000); // Réessayer après un délai de 1 seconde
+        lock = false;
+        setTimeout(playTurn, 1000);
     }
 }
 
-// Lancer le duel automatiquement dès le chargement de la page
+// Lancer la partie dès le chargement
 document.addEventListener("DOMContentLoaded", () => {
-    viewGrid(); // Afficher la grille vide au début
-    playTurn(); // Démarrer le jeu
+    viewGrid();
+    playTurn();
 });
