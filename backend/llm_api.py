@@ -1,14 +1,9 @@
 import requests
 import ast
-from dotenv import load_dotenv
-import os
 from openai import AzureOpenAI
+from config import URL
 
-load_dotenv()
-
-OLLAMA_URL = os.getenv("OLLAMA_TCP")
-
-def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url:str = None,):
+def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None):
     prompt = f"""
     Tu es un joueur de morpion (Tic-Tac-Toe) sur une grille 10x10.
     Deux joueurs, X et O, jouent à tour de rôle.
@@ -36,11 +31,12 @@ def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url:st
             ]
         )
 
-        move_text = response.choices[0].message.content.strip()
-        print("Réponse brute du modèle :", move_text)
+        text = response.choices[0].message.content.strip()
+        print(text)
+        print("Réponse brute du modèle :", text)
 
-    elif url == OLLAMA_URL:
-        r = requests.post(f"{OLLAMA_URL}/api/generate", json={
+    else:
+        r = requests.post(f"{URL}/api/generate", json={
             "model": model,
             "prompt": prompt,
             "system": "You are a Tic-Tac-Toe AI that only returns [x, y] moves.",
@@ -54,7 +50,15 @@ def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url:st
     try:
         move = ast.literal_eval(text)
         if isinstance(move, list) and len(move) == 2 and all(isinstance(i, int) for i in move):
+            x, y = move
+            if not (0 <= x < len(board[0]) and 0 <= y < len(board)):
+                print("Coup hors grille, fallback [0,0]")
+                return [0, 0]
+            if board[y][x] != "":
+                print("Coup sur case occupée, fallback [0,0]")
+                return [0, 0]
             return move
+            
     except Exception as e:
         print("Erreur lors du parsing :", e)
 
