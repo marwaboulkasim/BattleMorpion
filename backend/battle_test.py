@@ -1,4 +1,4 @@
-from .llm_api import get_llm_move, get_llm_move_azure
+from .llm_api import get_llm_move
 
 def init_board():
     """
@@ -29,8 +29,8 @@ def check_winner(board, player):
     Teste 4 directions :
     - horizontal
     - vertical
-    - diagonale droite (\)
-    - diagonale gauche (/)
+    - diagonale droite (\\)
+    - diagonale gauche (//)
     """
     N = 10  # Taille de la grille
     for i in range(N):
@@ -100,7 +100,7 @@ def battle():
         # Passage au joueur suivant
         turn += 1
 
-    print("------------------------------\n Fin du match !")
+    print("  \n Fin du match !")
 
 
 

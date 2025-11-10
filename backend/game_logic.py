@@ -1,4 +1,4 @@
-from .llm_api import get_llm_move
+from llm_api import get_llm_move
 
 # Initialisation de la grille 10x10 vide
 def init_board():
