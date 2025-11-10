@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from backend.game_logic import make_move
-# from backend.llm_api import get_llm_move
-from backend.schemas import PlayRequest
+from backend import make_move, get_llm_move, PlayRequest, client_AI, MODELS
 
 
 from .game_logic import make_move
@@ -26,9 +24,9 @@ def play_move(request: PlayRequest):
     print("Request reçu :", request)
 
     if request.player.lower() == "x":
-        move = get_llm_move(request.board, model="llama3", player="x")  # Ollama
+        move = get_llm_move(board=request.board, model=MODELS[0], player="x")
     else:
-        move = get_llm_move(request.board, model="o4-mini", player="o")  # Azure
+        move = get_llm_move(board=request.board, client=client_AI, model=MODELS[1], player="o")
 
     updated_board = make_move(request.board, move, request.player)
     return {"board": updated_board, "move": move}

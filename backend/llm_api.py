@@ -1,85 +1,74 @@
-import os
-import ast
 import requests
-from dotenv import load_dotenv
+import re
 from openai import AzureOpenAI
+from backend import URL
 
-load_dotenv()
+def fallback_move(board):
+    empty = [(x, y) for y, row in enumerate(board) for x, c in enumerate(row) if c == ""]
+    if not empty:
+        return [0, 0]
+    return empty[0]
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-
-
-
-def get_llm_move(board, model="llama3", player="x"):
-    """
-    Gère à la fois Ollama (local) et Azure OpenAI pour générer un coup de morpion.
-    Retourne un move [x, y].
-    """
-
+def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None):
     prompt = f"""
-    Tu joues au morpion 10x10.
-    Le joueur actuel est {player}.
-    Objectif : aligner 5 symboles consécutifs (horizontal, vertical, diagonal).
-    Voici la grille :
-    {board}
+        You play 10x10 tic-tac-toe. You are {player}.
+        Goal: 5 in a row.
+        Rules:
+        - Only play on empty cells.
+        - If you can win, do it.
+        - If opponent can win next, block.
+        - Otherwise play a good move.
+        Return ONLY: [x, y] with 0-9 indices.
+        If you output anything else than [x, y], your answer is invalid.
+        Board:
+        {board}
+        """
+    if isinstance(client, AzureOpenAI):
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a Tic-Tac-Toe AI that only returns [x, y] moves."},
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-    Règles :
-    1. Ne joue jamais sur une case déjà occupée.
-    2. Si tu peux gagner, fais-le.
-    3. Sinon, bloque ton adversaire.
-    4. Sinon, joue un coup stratégique.
-    5. Réponds STRICTEMENT au format [x, y].
-    Exemple : [3, 5]
-
-    """
-
-    if model == "o4-mini":
-        try:
-            client = AzureOpenAI(
-                api_key=os.getenv("AZURE_API_KEY"),
-                api_version="2024-12-01-preview",
-                azure_endpoint=os.getenv("AZURE_ENDPOINT")
-            )
-
-            response = client.chat.completions.create(
-                model=os.getenv("AZURE_MODEL", "o4-mini"),
-                messages=[
-                    {"role": "system", "content": "Tu es un joueur de morpion stratégique."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-
-            move_text = response.choices[0].message.content.strip()
-            print("Réponse brute Azure :", move_text)
-
-            move = ast.literal_eval(move_text)
-            if isinstance(move, list) and len(move) == 2:
-                return move
-
-        except Exception as e:
-            print(" Erreur Azure :", e)
-            return [0, 0]
-
+        text = response.choices[0].message.content.strip()
+        print(text)
+        print("Réponse brute du modèle :", text)
 
     else:
-        try:
-            r = requests.post(f"{OLLAMA_URL}/api/generate", json={
-                "model": model,
-                "prompt": prompt,
-                "system": "You are a Tic-Tac-Toe AI that only returns [x, y].",
-                "stream": False
-            }, timeout=25)
+        r = requests.post(f"{URL}/api/generate", json={
+            "model": model,
+            "prompt": prompt,
+            "system": "You are a Tic-Tac-Toe AI that only returns [x, y] moves.",
+            "stream": False,
+            "options": {"num_predict": 16,"temperature": 0.2}
+        })
 
-            data = r.json()
-            text = data.get("response", "").strip()
-            print("Réponse brute Ollama :", text)
+        data = r.json()
+        text = data.get("response", "").strip()
+        print("Réponse brute du modèle :", text)
+    
+    if not isinstance(text, str):
+        print("Réponse non textuelle, fallback.")
+        return fallback_move(board)
 
-            move = ast.literal_eval(text)
-            if isinstance(move, list) and len(move) == 2 and all(isinstance(i, int) for i in move):
-                return move
+    try:
+        match = re.search(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", text)
+        if not match:
+            print("Aucun pattern [x, y] détecté, fallback.")
+            return fallback_move(board)
+        x, y = int(match.group(1)), int(match.group(2))
+        move = [x, y]
+        if not (0 <= x < len(board[0]) and 0 <= y < len(board)):
+            print(f"Coup hors grille {move}, fallback.")
+            return fallback_move(board)
+        if board[y][x] != "":
+            print(f"Coup sur case occupée {move}, fallback.")
+            return fallback_move(board)
+        
+        return move
 
-        except Exception as e:
-            print(" Erreur Ollama :", e)
-            return [0, 0]
-
-    return [0, 0]
+    except Exception as e:
+        print("Erreur lors du parsing :", e)
+        return fallback_move(board)

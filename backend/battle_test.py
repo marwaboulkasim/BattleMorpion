@@ -1,4 +1,5 @@
-from .llm_api import get_llm_move, get_llm_move_azure
+from llm_api import get_llm_move
+from backend import client_AI, MODELS
 
 def init_board():
     """
@@ -66,25 +67,19 @@ def make_move(board, move, player):
 # Boucle principale du jeu
 
 def battle():
-    board = init_board()  # Crée la grille
-    # Liste des joueurs : (symbole, fonction LLM)
-    players = [("x", get_llm_move), ("o", get_llm_move_azure)]
-    turn = 0  # Compteur de tours
+    board = init_board()
+    players = [("x", lambda board: get_llm_move(board=board, model=MODELS[0], player="x")), 
+               ("o", lambda board: get_llm_move(board=board, client=client_AI, model=MODELS[1], player="o"))]
+    turn = 0
 
-    print(" Début du duel : Llama3 (Ollama) vs o4-mini (Azure)\n")
-
+    print(f"Début du duel : {MODELS[0]} vs {MODELS[1]}\n")
     while True:
         # Sélection du joueur courant
         player_symbol, llm_func = players[turn % 2]
-
-        # L'IA choisit son coup
-        move = llm_func(board, player=player_symbol)
-
-        # On applique le coup sur la grille
+        move = llm_func(board)
         board = make_move(board, move, player_symbol)
 
-        # Affichage du coup joué et de la grille
-        print(f"{'Llama3 (X)' if player_symbol == 'x' else 'Azure o4-mini (O)'} joue : {move}")
+        print(f"{MODELS[0]} (X) joue : {move}" if player_symbol == "x" else f"{MODELS[1]} (O) joue : {move}")
         print_board(board)
 
         # Vérification de la victoire

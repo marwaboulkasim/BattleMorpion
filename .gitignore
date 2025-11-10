@@ -3,6 +3,9 @@ data/
 .vscode/settings.json
 chroma_db/
 
+# Work files
+/notebooks
+
 #env
 .env
 venv
