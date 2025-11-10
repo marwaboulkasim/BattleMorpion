@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend import make_move, get_llm_move, PlayRequest, client_AI, MODELS
-
-
-from .game_logic import make_move
-from .llm_api import get_llm_move
+from game_logic import make_move
+from llm_api import get_llm_move
+from schemas import PlayRequest
+from config import client_AI, MODELS, URL
 
 app = FastAPI(title="Battle Morpion API")
 
@@ -22,9 +21,8 @@ def root():
 @app.post("/play")
 def play_move(request: PlayRequest):
     print("Request reçu :", request)
-
     if request.player.lower() == "x":
-        move = get_llm_move(board=request.board, model=MODELS[0], player="x")
+        move = get_llm_move(board=request.board, url=URL, model=MODELS[0], player="x")
     else:
         move = get_llm_move(board=request.board, client=client_AI, model=MODELS[1], player="o")
 
