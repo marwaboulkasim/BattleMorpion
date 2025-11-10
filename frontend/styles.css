@@ -1,0 +1,36 @@
+#grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    width: 500px;
+    height: 500px;
+    gap: 2px;
+    margin: 20px auto;
+}
+
+.cell {
+    border: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    user-select: none;
+}
+
+.cell:hover {
+    background-color: #ddd;
+}
+
+header h1 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+button#play {
+    margin: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
