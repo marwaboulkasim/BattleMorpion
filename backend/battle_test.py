@@ -1,4 +1,13 @@
-from llm_api import get_llm_move, get_llm_move_azure
+from llm_api import get_llm_move
+
+from dotenv import load_dotenv
+from openai_client import OpenAIClient
+import os
+load_dotenv()
+MODELS=os.getenv("MODELS")
+MODELS=tuple(MODELS.split())
+URL=os.getenv("OLLAMA_TCP")
+client_AI = OpenAIClient()
 
 # Initialisation de la grille 10x10 vide
 def init_board():
@@ -38,7 +47,8 @@ def make_move(board, move, player):
 
 def battle():
     board = init_board()
-    players = [("x", get_llm_move), ("o", get_llm_move_azure)]
+    players = [("x", get_llm_move(board=board, url=URL, model=MODELS[0], player="x")), 
+               ("o", get_llm_move(board=board, client=client_AI, model=MODELS[1], player="o"))]
     turn = 0
 
     print(" Début du duel : Llama3 (Ollama) vs o4-mini (Azure)\n")
