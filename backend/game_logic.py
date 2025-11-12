@@ -31,8 +31,8 @@ def check_winner(board, player):
 def fallback_move(board):
     empty = [
         (x, y)
-        for y, row in enumerate(board)
-        for x, c in enumerate(row)
+        for x, row in enumerate(board)
+        for y, c in enumerate(row)
         if c == ""
     ]
     if not empty:
