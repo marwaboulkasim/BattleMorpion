@@ -1,4 +1,3 @@
-# from llm_api import get_llm_move
 from .llm_api import get_llm_move
 
 
@@ -6,7 +5,6 @@ from .llm_api import get_llm_move
 def init_board():
     return [["" for _ in range(10)] for _ in range(10)]
 
-# Affiche la grille dans le terminal
 def print_board(board):
     for row in board:
         print(" ".join(cell if cell else "." for cell in row))

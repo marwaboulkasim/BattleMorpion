@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  battlemorpion:
+    build: .
+    container_name: battlemorpion_app
+    ports:
+      - "8000:8000"  # pour ton dev local, garde 8000:8000
+    environment:
+      - AZURE_API_KEY=${AZURE_API_KEY}
+      - AZURE_ENDPOINT=${AZURE_ENDPOINT}
+      - AZURE_MODEL=o4-mini
+      - OLLAMA_URL=http://127.0.0.1:11434
+      - PORT=${PORT:-8000}  
+    volumes:
+      - .:/app
+    command: uvicorn backend.api:app --host 0.0.0.0 --port $PORT

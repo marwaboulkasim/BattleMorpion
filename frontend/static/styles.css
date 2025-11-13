@@ -1,0 +1,120 @@
+/* ===== FONT & RESET ===== */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
+  background: radial-gradient(circle at top, #0d1b2a, #000814);
+  color: #f8f9fa;
+  position: relative;
+}
+
+/* ===== FOND ANIMÉ ===== */
+.bg-animation {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(255, 255, 255, 0.1));
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+  z-index: -1;
+  filter: blur(50px);
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== TITRES ===== */
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #00b4d8;
+  text-shadow: 0 0 15px rgba(0, 180, 216, 0.6);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #adb5bd;
+}
+
+/* ===== JEU ===== */
+.game-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 30px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.game-card:hover {
+  transform: scale(1.02);
+}
+
+/* ===== GRILLE ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 50px);
+  grid-template-rows: repeat(10, 50px);
+  gap: 6px;
+  justify-content: center;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(0, 180, 216, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: #00b4d8;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 180, 216, 0.2);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.cell:hover {
+  background: rgba(0, 180, 216, 0.2);
+  transform: scale(1.1);
+}
+
+.cell.winner {
+  color: #ff4d6d;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 77, 109, 0.8);
+}
+
+/* ===== BOUTON PLAY ===== */
+.btn-play {
+  background: linear-gradient(90deg, #00b4d8, #48cae4);
+  border: none;
+  color: #fff;
+  padding: 14px 40px;
+  font-size: 1.2rem;
+  border-radius: 50px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 180, 216, 0.4);
+}
+
+.btn-play:hover {
+  background: linear-gradient(90deg, #0096c7, #00b4d8);
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(0, 180, 216, 0.7);
+}
+
+/* ===== FOOTER ===== */
+footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  color: #ced4da;
+}
