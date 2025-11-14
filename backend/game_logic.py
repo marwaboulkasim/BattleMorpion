@@ -1,6 +1,6 @@
-from llm_api import get_llm_move
+from backend.llm_api import get_llm_move
 import random
-from config import client_AI, MODELS, URL
+from backend.config import client_AI, MODELS, URL, logger
 
 def init_board():
     return [["" for _ in range(10)] for _ in range(10)]
@@ -31,12 +31,12 @@ def check_winner(board, player):
 def fallback_move(board):
     empty = [
         (x, y)
-        for x, row in enumerate(board)
-        for y, c in enumerate(row)
+        for y, row in enumerate(board)
+        for x, c in enumerate(row)
         if c == ""
     ]
     if not empty:
-        print("Plus aucun coup possible, fin de la partie. Pas de gagnants")
+        logger.info("Plus aucun coup possible, fin de la partie. Pas de gagnants")
         return None
     return random.choice(empty)
 
@@ -45,17 +45,20 @@ def make_move(board, move, player):
     x, y = move
 
     if not (0 <= x < len(board[0]) and 0 <= y < len(board)):
-        print(f"Coup hors grille: {move}")
+        logger.warning(f"Coup hors grille: {move}")
         x, y = fallback_move(board)
-        print(f"Fallback en {x, y}")
+        logger.info("Fallback en [%s, %s]", x, y)
     
-    if board[x][y] != "":
-        print(f"Case déjà occupée en {move}")
+    if board[y][x] != "":
+        logger.warning(f"Case déjà occupée en {move}")
         x, y = fallback_move(board)
-        print(f"Fallback en {x, y}")
+        logger.info("Fallback en [%s, %s]", x, y)
 
-    board[x][y] = player 
-    print(f"{MODELS[0]} (X) joue : {x, y}" if player == "x" else f"{MODELS[1]} (O) joue : {x, y}")
+    board[y][x] = player 
+    if player == "x":
+        logger.info("%s (X) joue : [%s, %s]", MODELS[0], x, y)
+    else:
+        logger.info("%s (O) joue : [%s, %s]", MODELS[1], x, y)
     return board
 
 def battle():
@@ -64,7 +67,7 @@ def battle():
                ("o", lambda board: get_llm_move(board=board, client=client_AI, model=MODELS[1], player="o"))]
     turn = 0
 
-    print(f"Début du duel : {MODELS[0]} vs {MODELS[1]}\n")
+    logger.info("Début du duel : %s vs %s \n", MODELS[0], MODELS[1])
     while True:
         # Sélection du joueur courant
         player_symbol, llm_func = players[turn % 2]
@@ -75,18 +78,18 @@ def battle():
 
         # Vérification de la victoire
         if check_winner(board, player_symbol):
-            print(f" Le joueur {player_symbol} a gagné  !")
+            logger.info(" Le joueur %s a gagné!", player_symbol)
             break
 
         # Vérification si la grille est pleine -> match nul
         if all(cell != "" for row in board for cell in row):
-            print(" Match nul !")
+            logger.info("Match nul!")
             break
 
         # Passage au joueur suivant
         turn += 1
 
-    print("------------------------------\n Fin du match !")
+    logger.info("------------------------------\n Fin du match !")
 
 
 if __name__ == "__main__":

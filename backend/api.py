@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from game_logic import make_move
-from llm_api import get_llm_move
-from schemas import PlayRequest
-from config import client_AI, MODELS, URL
+from backend.config import client_AI, MODELS, URL, logger
+from backend.llm_api import get_llm_move
+from backend.game_logic import make_move
+from backend.schemas import PlayRequest
 
 app = FastAPI(title="Battle Morpion API")
 
@@ -18,9 +18,13 @@ app.add_middleware(
 def root():
     return {"message": "Bienvenue sur Battle Morpion API"}
 
+@app.get("/config")
+def get_config():
+    return {"MODELS": MODELS}
+
 @app.post("/play")
 def play_move(request: PlayRequest):
-    print("Request reçu :", request)
+    logger.info("Request reçu : %s", request)
     if request.player.lower() == "x":
         move = get_llm_move(board=request.board, url=URL, model=MODELS[0], player="x")
     else:

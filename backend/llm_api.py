@@ -1,6 +1,7 @@
 import requests
 import re
 from openai import AzureOpenAI
+from backend.config import logger
 
 def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url = None):
     board_str = "\n".join(" ".join(cell or "." for cell in row) for row in board)
@@ -27,7 +28,7 @@ def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url = 
         )
 
         text = response.choices[0].message.content.strip()
-        print("Réponse brute du modèle :", text)
+        logger.info("Réponse brute du modèle : %s", text)
 
     else:
         r = requests.post(url, json={
@@ -39,19 +40,19 @@ def get_llm_move(board, model:str, player:str, client:AzureOpenAI = None, url = 
 
         data = r.json()
         text = data.get("response", "").strip()
-        print("Réponse brute du modèle :", text)
+        logger.info("Réponse brute du modèle : %s", text)
     
     if not isinstance(text, str):
-        print("Réponse non textuelle, fallback.")
+        logger.error("Réponse non textuelle, error.")
 
     try:
         match = re.search(r"\[\s*(\d+)\s*,\s*(\d+)\s*\]", text)
         if not match:
-            print("Aucun pattern [x, y] détecté.")
+            logger.error("Aucun pattern [x, y] détecté.")
         x, y = int(match.group(1)), int(match.group(2))
         move = [x, y]
         return move
 
     except Exception as e:
-        print("Erreur lors du parsing :", e)
+        logger.error("Erreur lors du parsing : %s", e)
         return None

@@ -1,9 +1,18 @@
-const urlAPI = "http://127.0.0.1:8000/play";
+let models = [];
+const urlAPI_play = "http://127.0.0.1:8000/play";
+let gridHTML;
+let controller = null;
+let playButton;
+
+(async function initConfig() {
+  const res = await fetch("http://127.0.0.1:8000/config");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const config = await res.json();
+  models = config.MODELS || [];
+})();
 
 
 const grid = Array.from({ length: 10 }, () => Array(10).fill(""));
-const gridHTML = document.querySelector("#grid");
-
 
 function viewGrid() {
   gridHTML.innerHTML = "";
@@ -80,21 +89,23 @@ async function playTurn() {
   if (!playing || lock) return;
   lock = true;
 
+  controller = new AbortController();
+  const signal = controller.signal;
+
   try {
-    const res = await fetch(urlAPI, {
+    const res = await fetch(urlAPI_play, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         player: joueur.toLowerCase(),
-        model: joueur === "X" ? "llama3" : "o4-mini",
+        model: joueur === "X" ? models[0] : models[1],
         board: grid
-      })
+      }),
+      signal,
     });
 
     const data = await res.json();
     let [x, y] = data.move;
-
-    // Si la case est occupée, on choisit une case vide aléatoire
     if (grid[y][x] !== "") {
       const empty = [];
       for (let i = 0; i < 10; i++) {
@@ -120,8 +131,12 @@ async function playTurn() {
         });
       }
 
-      alert(`${joueur === "X" ? "Ollama" : "Azure"} a gagné !`);
+      alert(`${joueur === "X" ? models[0] : models[1]} a gagné !`);
       playing = false;
+      lock = false;
+      playButton = document.getElementById("play");
+      playButton.textContent = "Relancer?";
+      console.log("Play → Relancer?");
       return;
     }
 
@@ -129,6 +144,10 @@ async function playTurn() {
     if (grid.flat().every(cell => cell !== "")) {
       alert("Match nul !");
       playing = false;
+      lock = false;
+      playButton = document.getElementById("play");
+      playButton.textContent = "Relancer?";
+      console.log("Play → Relancer?");
       return;
     }
 
@@ -142,25 +161,45 @@ async function playTurn() {
     }, 700);
 
   } catch (err) {
-    console.error("Erreur API :", err);
+    if (err.name === "AbortError") {
+      console.warn("Requête annulée !");
+    } else {
+      console.error("Erreur API :", err);
+    }
     lock = false;
-    setTimeout(playTurn, 1000);
   }
 }
 
 // Lancement au clic sur le bouton Play
 document.addEventListener("DOMContentLoaded", () => {
+  gridHTML = document.querySelector("#grid");
   viewGrid();
 
-  const playButton = document.getElementById("play");
+  playButton = document.getElementById("play");
   console.log("Bouton trouvé :", playButton);
 
   playButton.addEventListener("click", () => {
     if (!playing) {
-      playing = true;       // active le jeu
-      playButton.textContent = "Go"; 
-      console.log("Play → Go !");
-      playTurn();           
+    // Lancer la partie
+    grid.forEach(row => row.fill(""));
+    viewGrid();
+    playing = true;
+    lock = false;
+    playButton.textContent = "Bataille en cours... Annuler ?";
+    console.log("Play → Bataille en cours... Annuler?");
+    playTurn();
+  } else {
+    // Annuler la partie
+    playing = false;
+    lock = false;
+
+    if (controller) {
+      controller.abort();
+      controller = null;
     }
+    clearTimeout();
+    playButton.textContent = "Play";
+    console.warn("Partie annulée !");
+  }
   });
 });
